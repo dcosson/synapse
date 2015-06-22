@@ -3,6 +3,7 @@ require "synapse/service_watcher/zookeeper"
 require "synapse/service_watcher/ec2tag"
 require "synapse/service_watcher/dns"
 require "synapse/service_watcher/docker"
+require "synapse/service_watcher/docker_compose_links"
 require "synapse/service_watcher/zookeeper_dns"
 
 module Synapse
@@ -14,6 +15,7 @@ module Synapse
       'ec2tag' => EC2Watcher,
       'dns' => DnsWatcher,
       'docker' => DockerWatcher,
+      'docker_compose_links' => DockerComposeLinksWatcher ,
       'zookeeper_dns' => ZookeeperDnsWatcher,
     }
 
