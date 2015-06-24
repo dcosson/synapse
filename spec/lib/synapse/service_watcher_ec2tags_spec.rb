@@ -121,6 +121,27 @@ describe Synapse::EC2Watcher do
     let(:instance1) { FakeAWSInstance.new }
     let(:instance2) { FakeAWSInstance.new }
 
+    context 'watch' do
+
+      it 'discovers instances, configures backends, then sleeps' do
+        fake_backends = [1,2,3]
+        expect(subject).to receive(:discover_instances).and_return(fake_backends)
+        expect(subject).to receive(:configure_backends).with(fake_backends) { subject.stop }
+        expect(subject).to receive(:sleep_until_next_check)
+        subject.send(:watch)
+      end
+
+      it 'sleeps until next check if discover_instances fails' do
+        expect(subject).to receive(:discover_instances) do
+          subject.stop
+          raise "discover failed"
+        end
+        expect(subject).to receive(:sleep_until_next_check)
+        subject.send(:watch)
+      end
+
+    end
+
     context 'using the AWS API' do
       let(:ec2_client) { double('AWS::EC2') }
       let(:instance_collection) { double('AWS::EC2::InstanceCollection') }
