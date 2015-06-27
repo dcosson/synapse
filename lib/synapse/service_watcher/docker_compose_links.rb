@@ -34,11 +34,11 @@ module Synapse
         end
         # remove the protocol in the specified link
         host_and_port = addr.sub(/^.*:\/\//, '')
-        host, port_str = host_and_port.split ':'
+        host, port = host_and_port.split ':'
         backends << {
           'name' => link_name,
           'host' => host,
-          'port' => port_str.to_i
+          'port' => port
         }
         i += 1
       end
@@ -52,11 +52,11 @@ module Synapse
         else
           log.warn "synapse: no backends for service #{@name};" \
             " using default servers: #{@default_servers.inspect}"
-          @backends = @default_servers
+          set_backends @default_servers
         end
       else
         log.info "synapse: discovered #{new_backends.length} backends for service #{@name}"
-        @backends = new_backends
+        set_backends new_backends
       end
       @synapse.reconfigure!
     end
