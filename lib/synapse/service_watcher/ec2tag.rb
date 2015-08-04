@@ -18,7 +18,7 @@ module Synapse
       @check_interval = @discovery['check_interval'] || 15.0
 
       log.info "synapse: ec2tag watcher looking for instances " +
-        "tagged with #{@discovery['tag_name']}=#{@discovery['tag_value']}"
+        "tagged with #{@discovery['tags']}"
 
       @watcher = Thread.new { watch }
     end
@@ -29,10 +29,8 @@ module Synapse
       # Required, via options only.
       raise ArgumentError, "invalid discovery method #{@discovery['method']}" \
         unless @discovery['method'] == 'ec2tag'
-      raise ArgumentError, "aws tag name is required for service #{@name}" \
-        unless @discovery['tag_name']
-      raise ArgumentError, "aws tag value required for service #{@name}" \
-        unless @discovery['tag_value']
+      raise ArgumentError, "aws tags selector is required for service #{@name}" \
+        unless @discovery['tags']
 
       # As we're only looking up instances with hostnames/IPs, need to
       # be explicitly told which port the service we're balancing for listens on.
@@ -90,7 +88,7 @@ module Synapse
 
     def discover_instances
       AWS.memoize do
-        instances = instances_with_tags(@discovery['tag_name'], @discovery['tag_value'])
+        instances = instances_with_tags(@discovery['tags'])
 
         new_backends = []
 
@@ -108,11 +106,12 @@ module Synapse
       end
     end
 
-    def instances_with_tags(tag_name, tag_value)
-      @ec2.instances
-        .tagged(tag_name)
-        .tagged_values(tag_value)
-        .select { |i| i.status == :running }
+    def instances_with_tags(tags)
+      selected_instances = @ec2.instances
+      tags.each do |tag|
+        selected_instances = selected_instances.with_tag(tag['name'], tag['value'])
+      end
+      selected_instances.select { |i| i.status == :running }
     end
 
     def configure_backends(new_backends)
